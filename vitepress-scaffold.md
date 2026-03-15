@@ -406,7 +406,7 @@ After generating all files, run a quick sanity check:
 ```bash
 # Verify all sidebar links have matching files
 # (list all .md files and compare against config)
-find docs -name "*.md" | sort
+rg --files docs -g '*.md' | sort
 ```
 
 Ensure every link in `config.mts` has a corresponding `.md` file and vice versa.

@@ -3,6 +3,9 @@
 When the repo is classified as a **backend** service, extract the following by reading
 actual source files.
 
+Prefer `rg`/`rg --files` over `grep` and target the real service roots in the repo
+instead of assuming a single `src/` directory.
+
 ---
 
 ## Routes & API Endpoints
@@ -21,7 +24,8 @@ Identify every API endpoint using framework-specific patterns:
 - **GraphQL:** schema queries and mutations.
 - **OpenAPI/Swagger:** parse `openapi.yaml` or `swagger.json` if present.
 
-For each: method, path, purpose, request params, response shape, auth required, rate limited.
+For each: method, path, purpose, request params, response shape, auth required, rate
+limited, and the source file that defines it.
 
 ## Architecture
 
@@ -67,10 +71,8 @@ sequenceDiagram
 ## Databases & Data Model
 
 ```bash
-find . -name "*.prisma" -o -name "*.sql" -o -path "*/migrations/*" -o -path "*/models/*" | head -30
-grep -rn 'DATABASE_URL\|MONGO_URI\|REDIS_URL\|postgres\|mysql\|sqlite\|mongodb\|dynamodb' \
-  --include="*.ts" --include="*.js" --include="*.py" --include="*.rb" --include="*.go" \
-  --include="*.env*" --include="*.yaml" --include="*.yml" --include="*.toml" .
+rg --files . -g '*.prisma' -g '*.sql' -g '*/migrations/*' -g '*/models/*' | head -30
+rg -n 'DATABASE_URL|MONGO_URI|REDIS_URL|postgres|mysql|sqlite|mongodb|dynamodb' .
 ```
 
 For each data store: type, what data it holds, key tables, relationships, migration tool.
@@ -92,6 +94,9 @@ file storage, monitoring, testing.
 
 Flag external services — each is a failure point the PM should know about.
 
+Also note background workers, queues, schedulers, and cron-style jobs because they are
+often product-critical even when no user hits them directly.
+
 ## Authentication & Authorization
 
 Document: auth method, where enforced, role/permission model, public vs protected
@@ -104,8 +109,7 @@ Generate a sequence diagram showing login, token refresh, logout.
 ## Error Handling
 
 ```bash
-grep -rn 'catch\|except\|Error\|error_handler\|middleware.*error\|retry\|circuit.break' \
-  src/ app/ --include="*.ts" --include="*.js" --include="*.py" --include="*.rb" --include="*.go"
+rg -n 'catch|except|Error|error_handler|middleware.*error|retry|circuit\\.break' .
 ```
 
 Check: global error handler, structured logging, generic vs leaky errors, retries,
@@ -114,16 +118,14 @@ health check endpoint.
 ## Environment & Configuration
 
 ```bash
-find . -name ".env*" -o -name "config.*" -o -name "settings.*" | head -20
-grep -rn 'process\.env\.\|os\.environ\|os\.getenv\|ENV\[' \
-  --include="*.ts" --include="*.js" --include="*.py" --include="*.rb" . | \
-  grep -oP '(process\.env\.\w+|os\.environ\.get\("\w+"|os\.getenv\("\w+")' | sort -u
+rg --files . -g '.env*' -g 'config.*' -g 'settings.*' | head -20
+rg -o "process\\.env\\.[A-Z0-9_]+|os\\.environ(?:\\.get)?\\(['\\\"][A-Z0-9_]+['\\\"]\\)|os\\.getenv\\(['\\\"][A-Z0-9_]+['\\\"]\\)|ENV\\[['\\\"][A-Z0-9_]+['\\\"]\\]" .
 ```
 
 ## Testing
 
 ```bash
-find . -name "*test*" -o -name "*spec*" -o -name "__tests__" | head -30
+rg --files . -g '*test*' -g '*spec*' -g '__tests__/**' | head -30
 ```
 
 Are critical paths tested? Integration tests present?
@@ -131,7 +133,7 @@ Are critical paths tested? Integration tests present?
 ## API Documentation
 
 ```bash
-find . -name "openapi*" -o -name "swagger*" -o -path "*/docs/*" | head -10
+rg --files . -g 'openapi*' -g 'swagger*' -g '*/docs/*' | head -10
 ```
 
 If present, note format and freshness. If absent, flag as gap.

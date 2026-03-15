@@ -1,7 +1,11 @@
 # Frontend Checklist
 
 When the repo is classified as a **frontend** application, extract the following
-by reading actual source files. Do not guess — use `grep`, `find`, and file reads.
+by reading actual source files. Do not guess.
+
+Prefer `rg`/`rg --files` and scan the actual app roots the repo uses (`src/`, `app/`,
+`pages/`, `components/`, `routes/`, `packages/*`, etc.) rather than assuming `src/`
+exists.
 
 ---
 
@@ -17,7 +21,8 @@ Identify every route the user can navigate to.
 - **SvelteKit:** scan `src/routes/` for `+page.svelte`.
 - **Astro:** scan `src/pages/`.
 
-For each route record: URL path, auth required, component, dynamic segments.
+For each route record: URL path, auth required, component, dynamic segments, and the
+source file that defines it.
 
 ### Diagram: Route map
 
@@ -33,9 +38,9 @@ graph TD
 ## User Inputs
 
 ```bash
-grep -rn '<form\|<input\|<textarea\|<select\|type="file"\|onChange\|onSubmit\|handleSubmit\|useForm\|Formik\|react-hook-form\|zod\|yup' src/
-grep -rn 'useSearchParams\|useParams\|router.query\|URLSearchParams' src/
-grep -rn 'upload\|dropzone\|FileReader\|formData\|multipart' src/
+rg -n '<form|<input|<textarea|<select|type="file"|onChange|onSubmit|handleSubmit|useForm|Formik|react-hook-form|zod|yup' .
+rg -n 'useSearchParams|useParams|router\.query|URLSearchParams' .
+rg -n 'upload|dropzone|FileReader|formData|multipart' .
 ```
 
 For each: page/route, field names + types, validation rules, destination, error handling.
@@ -43,9 +48,9 @@ For each: page/route, field names + types, validation rules, destination, error 
 ## Analytics & Tracking Events
 
 ```bash
-grep -rn 'track(\|analytics\.\|gtag(\|ga(\|posthog\.\|mixpanel\.\|amplitude\.\|segment\.\|plausible\.\|umami\.\|logEvent\|trackEvent\|sendEvent\|dataLayer\.push' src/
-grep -rn 'pageview\|page_view\|trackPageView' src/
-grep -rn 'Sentry\.\|captureException\|captureMessage\|LogRocket\|Bugsnag' src/
+rg -n 'track\(|analytics\.|gtag\(|ga\(|posthog\.|mixpanel\.|amplitude\.|segment\.|plausible\.|umami\.|logEvent|trackEvent|sendEvent|dataLayer\.push' .
+rg -n 'pageview|page_view|trackPageView' .
+rg -n 'Sentry\.|captureException|captureMessage|LogRocket|Bugsnag' .
 ```
 
 For each: event name, trigger, payload, provider.
@@ -71,6 +76,9 @@ data fetching, form handling, analytics, error tracking, testing, build tooling.
 
 Flag deprecated, duplicated, or security-concern items.
 
+If the app is SSR/SSG/ISR capable (Next.js, Nuxt, Astro, Remix, etc.), note which
+rendering modes are used because that changes caching, SEO, and release behavior.
+
 ### Diagram: Dependency pie chart
 
 ```mermaid
@@ -84,13 +92,13 @@ pie title Dependency Breakdown
 ## Accessibility
 
 ```bash
-grep -rn 'aria-\|role=\|alt=\|tabIndex\|sr-only\|visually-hidden\|a11y' src/
+rg -n 'aria-|role=|alt=|tabIndex|sr-only|visually-hidden|a11y' .
 ```
 
 ## Error Handling & Loading States
 
 ```bash
-grep -rn 'ErrorBoundary\|Suspense\|fallback\|skeleton\|spinner\|loading' src/
+rg -n 'ErrorBoundary|Suspense|fallback|skeleton|spinner|loading' .
 ```
 
 Note routes/features lacking error or loading states.

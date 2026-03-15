@@ -3,6 +3,9 @@
 A BFF is a thin backend that sits between frontends and backend services. It aggregates,
 reshapes, and caches data for a specific frontend's needs.
 
+Prefer `rg`/`rg --files` and scan the real service roots in the repo rather than
+assuming `src/` or `app/` exists.
+
 ---
 
 ## Confirming BFF Classification
@@ -19,7 +22,8 @@ If it owns substantial business logic or a primary database → reclassify as **
 ## API Surface
 
 Map every endpoint. Additionally note: which frontend consumes it, which downstream
-services it calls, what data transformation it performs.
+services it calls, what data transformation it performs, and the source file that
+defines it.
 
 | BFF Endpoint | Frontend | Downstream Services | Transformation |
 |---|---|---|---|
@@ -64,13 +68,15 @@ sequenceDiagram
 ## Downstream Service Dependencies
 
 ```bash
-grep -rn 'fetch(\|axios\.\|http\.\|got(\|request(\|httpx\|reqwest\|HttpClient' src/ app/
-grep -rn 'grpc\|protobuf\|\.proto' src/ app/
-grep -rn 'SERVICE_URL\|API_URL\|BASE_URL\|ENDPOINT\|_HOST\|_PORT' \
-  --include="*.env*" --include="*.yaml" --include="*.ts" --include="*.py" .
+rg -n 'fetch\(|axios\.|http\.|got\(|request\(|httpx|reqwest|HttpClient' .
+rg -n 'grpc|protobuf|\.proto' .
+rg -n 'SERVICE_URL|API_URL|BASE_URL|ENDPOINT|_HOST|_PORT' .
 ```
 
 For each: name, purpose, communication method, config variable, failure behavior.
+
+If the consuming frontend is not explicit, infer it from route names, typed client imports,
+workspace names, or environment variable naming and label that inference clearly.
 
 ## Data Aggregation Patterns
 
@@ -80,7 +86,7 @@ Sequential = slower + fragile. This affects page load — product-relevant.
 ## Caching Layer
 
 ```bash
-grep -rn 'cache\|Cache\|redis\|ttl\|expires\|stale\|revalidate\|memoize' src/ app/
+rg -n 'cache|Cache|redis|ttl|expires|stale|revalidate|memoize' .
 ```
 
 For each cache: what's cached, TTL, invalidation strategy, staleness risk.
@@ -97,7 +103,7 @@ For each cache: what's cached, TTL, invalidation strategy, staleness risk.
 ## Error Handling & Resilience
 
 ```bash
-grep -rn 'circuit.break\|retry\|timeout\|fallback\|catch\|degrade\|partial' src/ app/
+rg -n 'circuit\\.break|retry|timeout|fallback|catch|degrade|partial' .
 ```
 
 Check: circuit breakers, timeouts, partial responses, retry logic.

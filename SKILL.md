@@ -27,6 +27,19 @@ The output is a VitePress project: Markdown files with frontmatter, a config fil
 and a `package.json`. The user runs `npm install && npm run docs:dev` to view locally
 or `npm run docs:build` to get a static site they can host anywhere.
 
+## Load Only The Companion Files You Need
+
+This skill keeps its companion references at the repo root:
+
+- `frontend-checklist.md`
+- `backend-checklist.md`
+- `bff-checklist.md`
+- `site-structure.md`
+- `vitepress-scaffold.md`
+
+Load only the files relevant to the detected project types. Do not read every companion
+file unless the repo mix requires it.
+
 ---
 
 ## Step 0 — Determine scan scope (single repo vs multi-repo)
@@ -90,16 +103,17 @@ Read the reference checklist for each project's type:
 
 | Repo type      | Reference to read                    |
 |----------------|--------------------------------------|
-| Frontend       | `references/frontend-checklist.md`   |
-| Backend        | `references/backend-checklist.md`    |
-| BFF            | `references/bff-checklist.md`        |
+| Frontend       | `frontend-checklist.md`              |
+| Backend        | `backend-checklist.md`               |
+| BFF            | `bff-checklist.md`                   |
 | Fullstack      | Read both frontend AND backend       |
-| Library / SDK  | `references/backend-checklist.md` (adapt) |
-| Infrastructure | `references/backend-checklist.md` (adapt) |
+| Library / SDK  | `backend-checklist.md` (adapt)       |
+| Infrastructure | `backend-checklist.md` (adapt)       |
 | Other          | Best judgment; pull from all          |
 
 Walk through each checklist. For every item, search actual source files — do not guess.
-Use `grep`, `find`, and file reads.
+Prefer `rg` and `rg --files` for fast, repo-wide scans. Use direct file reads to confirm
+the exact behavior behind each match before documenting it.
 
 ### Collect diagram data during scan
 
@@ -115,8 +129,8 @@ As you scan, note data for these Mermaid diagrams:
 
 ## Step 3 — Generate the VitePress project
 
-Read `references/site-structure.md` for the page-by-page content specification.
-Read `templates/vitepress-scaffold.md` for the exact file structure, config, and
+Read `site-structure.md` for the page-by-page content specification.
+Read `vitepress-scaffold.md` for the exact file structure, config, and
 package.json to generate.
 
 ### Output file structure
@@ -220,15 +234,19 @@ Keep diagrams readable: max ~15 nodes, short labels, color-code by layer/project
 
 ## Step 4 — Build and output
 
-Read `templates/vitepress-scaffold.md` for the exact `package.json`, `config.mts`,
+Read `vitepress-scaffold.md` for the exact `package.json`, `config.mts`,
 and file content to generate.
 
 Steps:
-1. Create the output directory under `/mnt/user-data/outputs/`
+1. If the user gave an output path, use it. Otherwise create the docs site in the current
+   workspace or next to the scanned repo using a clear folder name such as
+   `[project-name]-docs/` or `docs-wiki/`.
 2. Write `package.json` with VitePress + mermaid plugin dependencies
 3. Write `docs/.vitepress/config.mts` with sidebar config matching all generated pages
 4. Write each Markdown page with frontmatter and content
-5. Present the output folder to the user
+5. Verify the generated file set matches the sidebar config and that intentionally skipped
+   topics still have placeholder pages
+6. Present the output folder to the user
 
 Tell the user:
 > "Your docs site is ready. To view it locally:
