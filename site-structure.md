@@ -33,7 +33,8 @@ Content:
 ### routes.md — Routes & Endpoints
 
 Content:
-- Table: Route/Endpoint | Method | Purpose | Auth required? | Dynamic params?
+- Table: Route/Endpoint | Method | Purpose | Auth required? | Dynamic params? | Source
+- Each row should include a source file and line number reference
 - Frontend: Mermaid `graph TD` showing page hierarchy / navigation tree
 - Backend: group by resource (all `/users/*` together, etc.)
 - GraphQL: list queries and mutations separately
@@ -52,8 +53,10 @@ Content:
 Content split into two sections:
 
 **Existing events:**
-- Table: Event name | Trigger | Payload | Provider
+- Table: Event name | Trigger | Payload | Provider | Source File | Line
 - Grouped by category: page views, clicks, form submissions, errors, custom
+- Include code snippets (in `details` containers) for events with complex payloads
+  or conditional tracking logic
 
 **Gap analysis:**
 - For each gap use this format:
@@ -96,6 +99,7 @@ Content:
 - Role/permission table: Role | Capabilities | Restrictions
 - List of public vs protected endpoints/pages
 - Security observations: CORS, rate limiting, input sanitization, HTTPS
+- Include code snippets for auth middleware and role-checking logic with source references
 
 ### configuration.md — Configuration
 
@@ -108,7 +112,9 @@ Content:
 ### risks.md — Risk Register
 
 Content:
-- Table: Risk | Severity | Category | Affected area | Recommendation
+- Table: Risk | Severity | Category | Affected area | Source | Recommendation
+- Include source file and line references for each risk
+- For high-severity risks, include a code snippet showing the problematic code
 - Categories: Security, Reliability, Performance, Data Integrity, UX, Compliance,
   Maintainability
 - Severity: High (data loss/breach/revenue), Medium (degrades over time), Low (improvement opportunity)

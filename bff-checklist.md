@@ -22,8 +22,25 @@ If it owns substantial business logic or a primary database → reclassify as **
 ## API Surface
 
 Map every endpoint. Additionally note: which frontend consumes it, which downstream
-services it calls, what data transformation it performs, and the source file that
-defines it.
+services it calls, what data transformation it performs, and the **source file and
+line number** that defines it.
+
+Include code snippets for endpoints with complex aggregation logic:
+
+````markdown
+::: details 📄 Source: `src/routes/dashboard.ts:20-45`
+```typescript
+router.get('/api/dashboard', authenticate, async (req, res) => {
+  const [profile, billing, usage] = await Promise.all([
+    userService.getProfile(req.user.id),
+    billingService.getPlan(req.user.id),
+    analyticsService.getUsageSummary(req.user.id),
+  ])
+  res.json({ profile, plan: billing.plan, usage: usage.summary })
+})
+```
+:::
+````
 
 | BFF Endpoint | Frontend | Downstream Services | Transformation |
 |---|---|---|---|
@@ -92,6 +109,23 @@ rg -n 'cache|Cache|redis|ttl|expires|stale|revalidate|memoize' .
 For each cache: what's cached, TTL, invalidation strategy, staleness risk.
 
 **PM relevance:** 5-min TTL on billing = user sees old plan for up to 5 min after upgrade.
+
+## Analytics & Tracking Events
+
+BFF layers often proxy or enrich analytics events between frontend and backend.
+
+```bash
+rg -n 'track\(|analytics\.|logEvent|emit\(|publish\(' .
+rg -n 'x-request-id|correlation.id|trace' .
+```
+
+For each: event name, trigger, payload, whether it originates in the BFF or is
+proxied from the frontend, **source file, and line number**.
+
+| Event Name | Trigger | Origin | Destination | Source File | Line |
+|------------|---------|--------|-------------|-------------|------|
+| `api_call_duration` | Every request | BFF | Datadog | `src/middleware/metrics.ts` | 12 |
+| `aggregation_error` | Downstream failure | BFF | Sentry | `src/utils/resilience.ts` | 55 |
 
 ## Auth & Session Management
 

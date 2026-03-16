@@ -22,7 +22,20 @@ Identify every route the user can navigate to.
 - **Astro:** scan `src/pages/`.
 
 For each route record: URL path, auth required, component, dynamic segments, and the
-source file that defines it.
+source file that defines it (include file path and line number).
+
+Example code reference for a route definition:
+
+````markdown
+::: details 📄 Source: `app/dashboard/page.tsx:1-12`
+```tsx
+export default function DashboardPage() {
+  // Auth enforced by middleware — see auth.md
+  return <DashboardLayout>...</DashboardLayout>
+}
+```
+:::
+````
 
 ### Diagram: Route map
 
@@ -53,7 +66,31 @@ rg -n 'pageview|page_view|trackPageView' .
 rg -n 'Sentry\.|captureException|captureMessage|LogRocket|Bugsnag' .
 ```
 
-For each: event name, trigger, payload, provider.
+For each: event name, trigger, payload, provider, **source file, and line number**.
+
+Build the analytics inventory table as you scan:
+
+| Event Name | Trigger | Payload Fields | Provider | Source File | Line |
+|------------|---------|----------------|----------|-------------|------|
+| `page_view` | Route change | `{ path, title }` | GA4 | `src/analytics.ts` | 15 |
+| `button_click` | CTA click | `{ button_id, page }` | Mixpanel | `src/components/Hero.tsx` | 42 |
+
+For events with complex payloads or conditional logic, include a code snippet:
+
+````markdown
+::: details 📄 Source: `src/analytics/track.ts:30-45`
+```typescript
+export function trackPurchase(order: Order) {
+  analytics.track('purchase_completed', {
+    order_id: order.id,
+    total: order.total,
+    items: order.items.length,
+    coupon: order.coupon ?? 'none',
+  })
+}
+```
+:::
+````
 
 ## Analytics Gaps
 
