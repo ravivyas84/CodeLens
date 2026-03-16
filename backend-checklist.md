@@ -25,7 +25,30 @@ Identify every API endpoint using framework-specific patterns:
 - **OpenAPI/Swagger:** parse `openapi.yaml` or `swagger.json` if present.
 
 For each: method, path, purpose, request params, response shape, auth required, rate
-limited, and the source file that defines it.
+limited, and the **source file and line number** that defines it.
+
+Include code references in the generated routes table:
+
+```markdown
+| Method | Path | Purpose | Auth | Source |
+|--------|------|---------|------|--------|
+| POST | `/api/orders` | Create order | JWT | [`src/routes/orders.ts:45`] |
+| GET | `/api/users/:id` | Get user profile | JWT | [`src/routes/users.ts:12`] |
+```
+
+For endpoints with complex middleware chains or business logic, add a code snippet:
+
+````markdown
+::: details 📄 Source: `src/routes/orders.ts:45-67`
+```typescript
+router.post('/api/orders', authenticate, validateBody(orderSchema), async (req, res) => {
+  const order = await orderService.create(req.body, req.user.id)
+  await notificationService.sendOrderConfirmation(order)
+  res.status(201).json(order)
+})
+```
+:::
+````
 
 ## Architecture
 
@@ -97,10 +120,46 @@ Flag external services — each is a failure point the PM should know about.
 Also note background workers, queues, schedulers, and cron-style jobs because they are
 often product-critical even when no user hits them directly.
 
+## Analytics & Tracking Events
+
+Backend services often emit server-side analytics events for actions that don't
+originate from a UI click (e.g., webhook processing, cron jobs, queue consumers).
+
+```bash
+rg -n 'track\(|analytics\.|logEvent|emit\(|publish\(|sendEvent|metrics\.' .
+rg -n 'statsd|prometheus|datadog|newrelic|cloudwatch' .
+rg -n 'audit_log|audit\.log|AuditLog' .
+```
+
+For each event: name, trigger, payload fields, destination (analytics provider, log,
+queue), **source file, and line number**.
+
+| Event Name | Trigger | Payload | Destination | Source File | Line |
+|------------|---------|---------|-------------|-------------|------|
+| `order.created` | POST /api/orders | `{ order_id, user_id, total }` | Event bus | `src/services/order.ts` | 88 |
+| `payment.failed` | Stripe webhook | `{ payment_id, error }` | Datadog | `src/webhooks/stripe.ts` | 34 |
+
 ## Authentication & Authorization
 
 Document: auth method, where enforced, role/permission model, public vs protected
-endpoints, token lifecycle.
+endpoints, token lifecycle. Include file path and line number for auth middleware
+and role-checking logic.
+
+For security-relevant auth code, always include a source snippet:
+
+````markdown
+::: details 📄 Source: `src/middleware/auth.ts:10-25`
+```typescript
+export const authenticate = (req, res, next) => {
+  const token = req.headers.authorization?.replace('Bearer ', '')
+  if (!token) return res.status(401).json({ error: 'Unauthorized' })
+  const decoded = jwt.verify(token, process.env.JWT_SECRET)
+  req.user = decoded
+  next()
+}
+```
+:::
+````
 
 ### Diagram: Auth flow
 

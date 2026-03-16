@@ -104,6 +104,97 @@ export default withMermaid(
 )
 ```
 
+### Theme override for fullscreen diagrams: `docs/.vitepress/theme/index.ts`
+
+```typescript
+import DefaultTheme from 'vitepress/theme'
+import './custom.css'
+
+export default {
+  extends: DefaultTheme,
+  enhanceApp({ app, router, siteData }) {
+    if (typeof window !== 'undefined') {
+      router.onAfterRouteChanged = () => {
+        setTimeout(() => {
+          document.querySelectorAll('.mermaid').forEach((el) => {
+            if (el.querySelector('.fullscreen-btn')) return
+            const btn = document.createElement('button')
+            btn.className = 'fullscreen-btn'
+            btn.textContent = '⛶ Fullscreen'
+            btn.title = 'View diagram fullscreen'
+            btn.addEventListener('click', () => {
+              el.classList.toggle('mermaid-fullscreen')
+              btn.textContent = el.classList.contains('mermaid-fullscreen')
+                ? '✕ Exit Fullscreen'
+                : '⛶ Fullscreen'
+            })
+            el.style.position = 'relative'
+            el.appendChild(btn)
+          })
+        }, 500)
+      }
+    }
+  }
+}
+```
+
+### Fullscreen styles: `docs/.vitepress/theme/custom.css`
+
+```css
+.mermaid {
+  position: relative;
+}
+
+.fullscreen-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 10;
+  padding: 4px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  background: var(--vp-c-bg-soft);
+  border: 1px solid var(--vp-c-border);
+  border-radius: 4px;
+  color: var(--vp-c-text-2);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.mermaid:hover .fullscreen-btn {
+  opacity: 1;
+}
+
+.mermaid-fullscreen {
+  position: fixed !important;
+  top: 0;
+  left: 0;
+  width: 100vw !important;
+  height: 100vh !important;
+  z-index: 9999;
+  background: var(--vp-c-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  overflow: auto;
+}
+
+.mermaid-fullscreen .fullscreen-btn {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  opacity: 1;
+  z-index: 10000;
+}
+
+.mermaid-fullscreen svg {
+  max-width: 95vw;
+  max-height: 90vh;
+}
+```
+```
+
 ### Multi-repo config
 
 For multi-repo, use VitePress's "multiple sidebars" feature. Each project directory
@@ -199,9 +290,44 @@ export default withMermaid(
 
 ---
 
+## .codelens-meta.json
+
+Generate this file at the docs root so future runs can detect unchanged code and skip
+regeneration (see SKILL.md Step 1.5):
+
+```json
+{
+  "generated_at": "{{ISO_TIMESTAMP}}",
+  "generator": "code-report-for-pm",
+  "commit_hashes": {
+    "{{project-name}}": "{{full_commit_hash}}"
+  },
+  "repo_path": "{{absolute_path_to_scanned_folder}}",
+  "projects_scanned": ["{{project-a}}", "{{project-b}}"]
+}
+```
+
+For single-repo, `commit_hashes` has one entry. For multi-repo, one entry per project.
+
+---
+
 ## Page templates
 
 Every Markdown page should start with YAML frontmatter. Below are templates for each page.
+
+### Code references in all pages
+
+Every table that documents routes, events, dependencies, or risks should include a
+**Source** column with file path and line number. For significant findings, use
+VitePress `details` containers to show the actual source code:
+
+````markdown
+::: details 📄 Source: `src/routes/users.ts:15-30`
+```typescript
+// actual code from the scanned repository
+```
+:::
+````
 
 ### Home page (single-repo): `docs/index.md`
 
@@ -225,7 +351,7 @@ title: Executive Summary
 | **Primary language** | {{TypeScript / Python / etc.}} |
 | **Routes / Endpoints** | {{count}} |
 | **Dependencies** | {{count}} runtime, {{count}} dev |
-| **Analytics events** | {{count}} tracked, {{count}} gaps identified |
+| **Analytics events** | {{count}} tracked, {{count}} gaps identified ([view all](./analytics)) |
 | **Last updated** | {{date from git}} |
 
 ## What This Project Does
@@ -407,6 +533,43 @@ After generating all files, run a quick sanity check:
 # Verify all sidebar links have matching files
 # (list all .md files and compare against config)
 rg --files docs -g '*.md' | sort
+
+# Verify theme files exist for fullscreen diagram support
+ls docs/.vitepress/theme/index.ts docs/.vitepress/theme/custom.css
+
+# Verify metadata file exists
+ls .codelens-meta.json
 ```
 
 Ensure every link in `config.mts` has a corresponding `.md` file and vice versa.
+Verify that `docs/.vitepress/theme/index.ts` and `custom.css` are present for
+fullscreen diagram support.
+
+---
+
+## Updated output file structure
+
+**Single-repo mode (complete):**
+```
+[project-name]-docs/
+├── .codelens-meta.json              ← Same-commit detection metadata
+├── package.json
+├── docs/
+│   ├── .vitepress/
+│   │   ├── config.mts
+│   │   └── theme/
+│   │       ├── index.ts             ← Fullscreen diagram toggle
+│   │       └── custom.css           ← Fullscreen diagram styles
+│   ├── index.md
+│   ├── architecture.md
+│   ├── routes.md
+│   ├── inputs.md
+│   ├── analytics.md
+│   ├── dependencies.md
+│   ├── data-model.md
+│   ├── auth.md
+│   ├── configuration.md
+│   ├── risks.md
+│   ├── improvements.md
+│   └── glossary.md
+```
